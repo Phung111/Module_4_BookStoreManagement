@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/layout :: head"></head>
+<body>
+<h3>Xoa Thanh pho</h3>
+<h5>Bạn có chắc muốn xoá thành phố <p th:text="${thanhpho.get().getTen()}"></p></h5>
+<div id="form">
+    <form action="#"  th:object="${thanhpho}" method="POST" novalidate="novalidate">
+        <input type="hidden" th:field="*{id}"/>
+        <input type="submit" value="Xoa"/>
+        <a href="/"><input type="button" value="Thoat"/></a>
+    </form>
+</div>
+<footer th:replace="/layout :: footer"></footer>
+</body>
+</html>

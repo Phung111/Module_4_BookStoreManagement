@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/layout :: head">
+</head>
+<body>
+<h3>Customers</h3>
+<div style="display: flex">
+    <div class="col-3">
+        Danh sách thành phố
+    </div>
+    <div class="col-7">
+
+    </div>
+    <div class="col-2">
+        <a href="/create">
+            <button type="button"> Thêm thành phố</button>
+        </a>
+    </div>
+</div>
+
+<div class="notify">
+    <div th:if="${success}">
+        <span th:text="${success}"></span>
+    </div>
+</div>
+<table id = "customers">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Thành Phố</th>
+            <th>Quốc gia</th>
+            <th ></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="row : ${thanhPhos}">
+            <td th:text="${row.getId()}"></td>
+            <td>
+                <a th:href="@{/view/__${row.getId()}__}">
+                    <p th:text="${row.getTen()}"></p>
+                </a>
+            </td>
+            <td th:text="${row.getQuocgia()}"></td>
+            <td>
+                <a th:href="@{/edit/__${row.getId()}__}">Chỉnh sửa</a>
+                |
+                <a th:href="@{/delete/__${row.getId()}__}">Xoá</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<footer th:replace="/layout :: footer"></footer>
+</body>
+</html>

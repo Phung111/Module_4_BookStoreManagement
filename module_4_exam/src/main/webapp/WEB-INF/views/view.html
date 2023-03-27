@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/layout :: head"></head>
+<body>
+<div class="">
+    <div class="header">
+        <h5>Thành Phố <p th:text="${thanhpho.get().getTen()}"></p></h5>
+    </div>
+    <div class="body">
+        <div class="header-body">
+            <div class="col-3">
+                <h3>Thành Phố <p th:text="${thanhpho.get().getTen()}"></p> </h3>
+            </div>
+            <div class="col-6">
+
+            </div>
+            <div class="col-3">
+                <a href="">
+                    <button class="">
+                        Xem danh sách thành phố
+                    </button>
+                </a>
+            </div>
+        </div>
+        <div class="body-body">
+            <div class="detail">
+                <label>Tên:</label>
+                <label th:text="${thanhpho.get().getTen()}"></label>
+            </div>
+            <div class="detail">
+                <label>Quốc gia:</label>
+                <label th:text="${thanhpho.get().getQuocgia()}"></label>
+            </div>
+            <div class="detail">
+                <label>Diện tích:</label>
+                <label th:text="${thanhpho.get().getDientich()}"></label>
+            </div>
+            <div class="detail">
+                <label>Dân số:</label>
+                <label th:text="${thanhpho.get().getDanso()}"></label>
+            </div>
+            <div class="detail">
+                <label>GDP:</label>
+                <label th:text="${thanhpho.get().getGDP()}"></label>
+            </div>
+            <div class="detail">
+                <label>Giới thiệu:</label>
+                <label th:text="${thanhpho.get().getMota()}"></label>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="col-10"></div>
+        <div class="col-2">
+            <a href=""><button>Chỉnh sửa</button></a>
+            <a href=""><button>Xoa</button></a>
+        </div>
+    </div>
+</div>
+<footer th:replace="/layout :: footer"></footer>
+</body>
+</html>

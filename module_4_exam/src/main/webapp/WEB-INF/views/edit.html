@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/layout :: head"></head>
+<body>
+<h3>Sửa thành phố</h3>
+<div class="notify">
+    <div th:if="${fail}">
+        <span th:text="${fail}" style="color: red"></span>
+    </div>
+</div>
+<div id="form">
+    <form th:object="${thanhpho}" method="POST">
+        <input type="hidden" th:field="*{id}"/>
+        <div>
+            <label>Tên</label>
+            <input type="text" th:field="*{ten}"/>
+        </div>
+        <div>
+            <label>Quoc gia</label>
+            <input type="text" th:field="*{quocgia}"/>
+        </div>
+        <div>
+            <label>Dien tich</label>
+            <input type="text" th:field="*{dientich}"/>
+        </div>
+        <div>
+            <label>Dan so</label>
+            <input type="text" th:field="*{danso}"/>
+        </div>
+        <div>
+            <label>GDP</label>
+            <input type="text" th:field="*{GDP}"/>
+        </div>
+        <div>
+            <label>Gioi thieu</label>
+            <input type="text" th:field="*{mota}"/>
+        </div>
+        <input type="submit" value="Update"/>
+        <a href="/"><input type="button" value="Thoat"/></a>
+    </form>
+</div>
+<!-- --------------------Error-------------------- -->
+<th:block th:if="${errors == true}">
+    <div class="col-6">
+        <div class="card mb-4">
+            <div class="alert-danger" style="border-radius: 0.5rem">
+                <ul style="padding-top: 10px">
+                    <li class="label-error" th:each="err : ${#fields.errors('thanhpho.*')}" th:text="${err}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</th:block>
+<!-- ------------------End Error------------------ -->
+<footer th:replace="/layout :: footer"></footer>
+</body>
+</html>

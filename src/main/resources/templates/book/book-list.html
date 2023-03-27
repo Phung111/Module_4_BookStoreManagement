@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+
+    <title>Book</title>
+    <th:block th:replace="layout/head"/>
+
+</head>
+
+<body>
+<th:block th:replace="layout/body-start"/>
+
+<!-- Content -->
+
+<div class="container container-xxl flex-grow-1 container-p-y">
+    <h4 class="fw-bold py-3 mb-4">Book List</h4>
+
+    <!-- Basic Bootstrap Table -->
+    <div class="card">
+        <div class="col-12" style="display: flex">
+            <div class="col-4">
+                <h5 class="card-header">Book</h5>
+            </div>
+            <div class="col-3">
+
+            </div>
+            <div class="col-4">
+
+            </div>
+            <div class="col-1" style="display: flex;justify-content: end;align-items: center;padding-right: 30px ">
+                <a >
+                    <button type="button" class="btn btn-primary" id="btnShowCreateModal">
+                        <i class="fa-solid fa-book-medical"></i>
+                    </button>
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive text-nowrap">
+            <table id="tbBook" class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="width: 100px">Cover</th>
+                        <th>Name</th>
+                        <th>Author</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Rating</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <th:block th:replace="book/modal-create" />
+    <th:block th:replace="book/modal-update" />
+
+</div>
+
+
+
+<!-- / Content -->
+
+<th:block th:replace="layout/body-end"/>
+
+<th:block th:replace="layout/ajax-script"/>
+
+<script>
+
+    const page = {
+        urls: {
+            getAllBooks: AppBase.API_BOOK,
+            findBookById: AppBase.API_BOOK,
+            getAllRates: AppBase.API_BOOK + "/rate",
+            doCreate: AppBase.API_BOOK + "/create",
+            doDelete: AppBase.API_BOOK + "/delete",
+            doUpdate: AppBase.API_BOOK + "/update",
+
+        },
+        elements: {},
+        loadData: {},
+        commands: {},
+        dialogs: {
+            elements: {},
+            loadData: {},
+            commands: {},
+        }
+    }
+
+    let currentBookId;
+
+    let book = new Book();
+    let rate = new Rate();
+    let bookAvatar = new BookAvatar();
+
+    page.elements.btnShowCreateModal = $('#btnShowCreateModal');
+
+    page.dialogs.elements.modalCreateBook = $('#modalCreateBook');
+    page.dialogs.elements.modalUpdateBook = $('#modalUpdateBook');
+
+    page.dialogs.elements.btnCreateBook = $('#btnCreateBook');
+    page.dialogs.elements.btnUpdateBook = $('#btnUpdateBook');
+
+    page.dialogs.elements.nameCre = $('#nameCre');
+    page.dialogs.elements.authorCre = $('#authorCre');
+    page.dialogs.elements.priceCre = $('#priceCre');
+    page.dialogs.elements.quantityCre = $('#quantityCre');
+    page.dialogs.elements.rateCre = $('#rateCre');
+
+    page.dialogs.elements.nameUp = $('#nameUp');
+    page.dialogs.elements.authorUp = $('#authorUp');
+    page.dialogs.elements.priceUp = $('#priceUp');
+    page.dialogs.elements.quantityUp = $('#quantityUp');
+    page.dialogs.elements.rateUp = $('#rateUp');
+
+    page.dialogs.elements.wrapper = $("section .wrapper");
+    page.dialogs.elements.wrapperContent = $("section .wrapper .content");
+    page.dialogs.elements.imagePreview = $("section .image-preview");
+    page.dialogs.elements.btnClearImagePreview = $(".clear-image-preview i");
+
+    page.dialogs.elements.imageFile = $("#imageFile");
+    page.dialogs.elements.imagePreviewCanvas = $("section .image-preview canvas");
+    page.dialogs.elements.canvas = $("#canvas");
+    page.dialogs.elements.context = page.dialogs.elements.canvas[0].getContext('2d');
+    page.dialogs.elements.imagePreviewCanvas.css("display", "none");
+    page.dialogs.elements.divImagePreview = $("#modalCreateBook div.image-preview, div.file-name");
+
+    page.dialogs.elements.imageFileUp = $("#imageFileUp");
+    page.dialogs.elements.imagePreviewCanvasUp = $("section .image-preview #canvasUp");
+    page.dialogs.elements.canvasUp = $("#canvasUp");
+    page.dialogs.elements.contextUp = page.dialogs.elements.canvasUp[0].getContext('2d');
+    page.dialogs.elements.imagePreviewCanvasUp.css("display", "none");
+    page.dialogs.elements.divImagePreviewUp = $("#modalUpdateBook div.image-preview, div.file-name");
+
+
+
+    //---------------------- Add it here-----------------------//
+
+
+    page.dialogs.commands.doUpdate = () => {
+        let name = page.dialogs.elements.nameUp.val();
+        let author = page.dialogs.elements.authorUp.val();
+        let price = page.dialogs.elements.priceUp.val();
+        let quantity = page.dialogs.elements.quantityUp.val();
+        let rateId = page.dialogs.elements.rateUp.val();
+        let rateName = page.dialogs.elements.rateUp.find("option:selected").text();
+
+        let avatarFile = page.dialogs.elements.imageFileUp[0].files[0];
+
+        let formData = new FormData();
+        formData.append("name", name);
+        formData.append("author", author);
+        formData.append("price", price);
+        formData.append("quantity", quantity);
+        formData.append("rateId", rateId);
+        formData.append("rateName", rateName);
+        formData.append("file", avatarFile);
+
+        $.ajax({
+            type: 'PATCH',
+            contentType: false,
+            cache: false,
+            processData: false,
+            url: page.urls.doUpdate + '/' + currentBookId,
+            data: formData
+        })
+            .done((data) => {
+
+                book = data.book;
+                rate = data.rate;
+                bookAvatar = data.bookAvatar;
+
+                let str = renderBook(book, rate, bookAvatar);
+                $('#tr_' + currentBookId).replaceWith(str);
+
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Update Book Successfully',
+                    showConfirmButton: false,
+                    timer: 2000
+                })
+
+                page.dialogs.elements.modalUpdateBook.modal('hide');
+
+                page.commands.addEventClick();
+
+            })
+            .fail((error) => {
+                console.log(error);
+            })
+    }
+
+    page.dialogs.commands.doCreate = () => {
+        let name = page.dialogs.elements.nameCre.val();
+        let author = page.dialogs.elements.authorCre.val();
+        let price = page.dialogs.elements.priceCre.val();
+        let quantity = page.dialogs.elements.quantityCre.val();
+        let rateId = page.dialogs.elements.rateCre.val();
+        let rateName = page.dialogs.elements.rateCre.find("option:selected").text();
+
+        let avatarFile = page.dialogs.elements.imageFile[0].files[0];
+        console.log(avatarFile);
+
+        let formData = new FormData();
+            formData.append("name", name);
+            formData.append("author", author);
+            formData.append("price", price);
+            formData.append("quantity", quantity);
+            formData.append("rateId", rateId);
+            formData.append("rateName", rateName);
+            formData.append("file", avatarFile);
+
+        $.ajax({
+            type: 'POST',
+            contentType: false,
+            cache: false,
+            processData: false,
+            url: page.urls.doCreate,
+            data: formData
+        })
+            .done((data) => {
+
+                book = data.book;
+                rate = data.rate;
+                bookAvatar = data.bookAvatar;
+
+                let str = renderBook(book, rate, bookAvatar);
+                $('#tbBook tbody').prepend(str);
+
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Create Book Successfully',
+                    showConfirmButton: false,
+                    timer: 2000
+                })
+
+                page.dialogs.elements.modalCreateBook.modal('hide');
+
+                page.commands.addEventClick();
+
+            })
+            .fail((error) => {
+                console.log(error);
+            })
+    }
+
+    $('#createForm').validate({
+        rules: {
+            nameCre: {
+                required: true,
+            },
+            authorCre: {
+                required: true,
+            },
+            priceCre: {
+                required: true,
+                number: true,
+                min: 1,
+                max: 10000000
+            },
+            quantityCre: {
+                required: true,
+                number: true,
+                min: 1,
+                max: 1000
+            },
+            rateCre: {
+                required: true,
+            },
+        },
+        messages: {
+            nameCre: {
+                required: "Name is required front",
+            },
+            authorCre: {
+                required: "Author is required",
+            },
+            priceCre: {
+                required: "Price is required",
+                number: "Price is required",
+                min: "Min value is 10.000 đ",
+                max: "Max value is 10.000.000 đ",
+            },
+            quantityCre: {
+                required: "Quantity is required",
+                number: "Quantity must be number",
+                min: "Min value is 1",
+                max: "Max value is 100",
+            },
+            rateCre: {
+                required: "Rate is required",
+            },
+        },
+        errorLabelContainer: "#modalCreateBook .modal-alert-danger",
+        errorPlacement: function (error, element) {
+            error.appendTo("#modalCreateBook .modal-alert-danger");
+        },
+        showErrors: function (errorMap, errorList) {
+            if (this.numberOfInvalids() > 0) {
+                $("#modalCreateBook .modal-alert-danger").removeClass("hide").addClass("show");
+            } else {
+                $("#modalCreateBook .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                $("#createForm input.error").removeClass("error");
+            }
+            this.defaultShowErrors();
+        },
+        submitHandler: function () {
+            page.dialogs.commands.doCreate();
+        }
+    });
+
+    $('#updateForm').validate({
+        rules: {
+            nameUp: {
+                required: true,
+            },
+            authorUp: {
+                required: true,
+            },
+            priceUp: {
+                required: true,
+                number: true,
+                min: 1,
+                max: 10000000
+            },
+            quantityUp: {
+                required: true,
+                number: true,
+                min: 1,
+                max: 1000
+            },
+            rateUp: {
+                required: true,
+            },
+        },
+        messages: {
+            nameUp: {
+                required: "Name is required",
+            },
+            authorUp: {
+                required: "Author is required",
+            },
+            priceUp: {
+                required: "Price is required",
+                number: "Price is required",
+                min: "Min value is 10.000 đ",
+                max: "Max value is 10.000.000 đ",
+            },
+            quantityUp: {
+                required: "Quantity is required",
+                number: "Quantity must be number",
+                min: "Min value is 1",
+                max: "Max value is 100",
+            },
+            rateUp: {
+                required: "Rate is required",
+            },
+        },
+        errorLabelContainer: "#modalUpdateBook .modal-alert-danger",
+        errorPlacement: function (error, element) {
+            error.appendTo("#modalUpdateBook .modal-alert-danger");
+        },
+        showErrors: function (errorMap, errorList) {
+            if (this.numberOfInvalids() > 0) {
+                $("#modalUpdateBook .modal-alert-danger").removeClass("hide").addClass("show");
+            } else {
+                $("#modalUpdateBook .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                $("#updateForm input.error").removeClass("error");
+            }
+            this.defaultShowErrors();
+        },
+        submitHandler: function () {
+            page.dialogs.commands.doUpdate();
+        }
+    });
+
+    page.loadData.getAllRates = () => {
+        $.ajax({
+            type: 'GET',
+            url: page.urls.getAllRates
+        })
+            .done((data) => {
+                page.dialogs.elements.rateCre.empty();
+                page.dialogs.elements.rateUp.empty();
+                $.each(data, (i, item) => {
+                    let str = renderRate(item);
+                    page.dialogs.elements.rateCre.append(str);
+                    page.dialogs.elements.rateUp.append(str);
+                })
+            })
+            .fail((error) => {
+                console.log(error);
+            })
+
+    }
+
+    function renderRate(obj) {
+        return `
+                    <option value="${obj.id}">${obj.name}</option>
+                `;
+    }
+
+    page.commands.addEventClick = () => {
+        page.commands.addEventEditClick();
+        page.commands.addEventDeleteClick();
+    }
+
+        page.commands.addEventEditClick = () => {
+            $('.edit').off('click');
+
+            $('.edit').on('click', function () {
+
+                $('#updateForm')[0].reset();
+
+                let bookId = $(this).data('id');
+
+                page.loadData.findBookById(bookId).then((data) => {
+
+                    book = data.book;
+                    rate = data.rate;
+                    bookAvatar = data.bookAvatar
+
+                    currentBookId = bookId;
+
+                    page.dialogs.elements.nameUp.val(book.name);
+                    page.dialogs.elements.authorUp.val(book.author);
+                    page.dialogs.elements.priceUp.val(book.price);
+                    page.dialogs.elements.quantityUp.val(book.quantity);
+                    page.dialogs.elements.rateUp.val(rate.id);
+
+                    page.dialogs.commands.loadImageToCanvas(null, "URL", bookAvatar.fileUrl);
+
+                    page.dialogs.elements.modalUpdateBook.modal('show');
+
+
+                })
+                    .catch((error) => {
+                        alert("Kokyaku wa sonzai shimasen");
+                    });
+            })
+        }
+
+        page.commands.addEventDeleteClick = () => {
+            $('.delete').off('click');
+
+            $('.delete').on('click', function () {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        let bookId = $(this).data('id');
+
+                        page.loadData.findBookById(bookId).then((data) => {
+                            $.ajax({
+                                headers: {
+                                    'accept': 'application/json',
+                                    'content-type': 'application/json'
+                                },
+                                type: 'POST',
+                                url: page.urls.doDelete + '/' + bookId,
+                                // data: JSON.stringify(obj)
+                            })
+                                .done((data) => {
+
+                                    // let str = renderCustomer(data);
+                                    $('#tr_' + bookId).remove();
+
+                                    page.commands.addEventClick();
+
+                                    Swal.fire({
+                                        position: 'middle-end',
+                                        icon: 'success',
+                                        title: 'Deleted Successfully',
+                                        showConfirmButton: false,
+                                        timer: 2000
+                                    })
+                                })
+                                .fail((error) => {
+                                    Swal.fire({
+                                        position: 'center',
+                                        icon: 'error',
+                                        title: 'You dont have permition to do this',
+                                        showConfirmButton: true
+                                    })
+                                })
+                        })
+                    }
+                })
+
+
+            })
+        }
+
+
+    page.loadData.findBookById = (id) => {
+        return $.ajax({
+            type: 'GET',
+            url: page.urls.findBookById + '/' + id
+        })
+            .done((data) => {
+
+            })
+            .fail((error) => {
+                console.log(error);
+            })
+    }
+
+    page.loadData.getAllBooks = () => {
+        $.ajax({
+            type: 'GET',
+            url: page.urls.getAllBooks
+        })
+            .done((data) => {
+                $.each(data, (i, item) => {
+
+                    book = item;
+                    rate.name = book.rateName;
+                    bookAvatar.fileFolder = book.fileFolder;
+                    bookAvatar.fileName = book.fileName;
+
+                    let str = renderBook(book, rate, bookAvatar);
+                    $('#tbBook tbody').prepend(str);
+                })
+
+                page.commands.addEventClick();
+
+            })
+            .fail((error) => {
+                console.log(error);
+            })
+    }
+
+    function renderBook(book, rate, bookAvatar) {
+        let image_thumbnail = `
+                ${AppBase.API_CLOUDINARY}/${AppBase.SCALE_IMAGE_W_80_H_80_Q_100}/${bookAvatar.fileFolder}/${bookAvatar.fileName}
+            `;
+        return `
+                    <tr id="tr_${book.id}">
+                        <td>${book.id}</td>
+                        <td>
+                            <img src="${image_thumbnail}" alt="">
+                        </td>
+                        <td>${book.name}</td>
+                        <td>${book.author}</td>
+                        <td>${book.price}</td>
+                        <td>${book.quantity}</td>
+                        <td>${rate.name}</td>
+                        <td>
+                            <i class='bx bx-edit edit' data-id="${book.id}"></i>
+                            <i class='bx bx-trash delete' data-id="${book.id}"></i>
+                        </td>
+                    </tr>
+                `;
+    }
+
+    page.dialogs.commands.loadImageToCanvas = (imageFile, fileType, imageUrl) => {
+        page.dialogs.elements.imagePreviewCanvas.css("display", "");
+        page.dialogs.elements.wrapper.addClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 0);
+
+        page.dialogs.elements.imagePreviewCanvasUp.css("display", "");
+        page.dialogs.elements.wrapper.addClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 0);
+
+        let imageObj = new Image();
+
+        imageObj.onload = function () {
+            page.dialogs.elements.context.canvas.width = imageObj.width;
+            page.dialogs.elements.context.canvas.height = imageObj.height;
+            page.dialogs.elements.context.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
+
+            page.dialogs.elements.contextUp.canvas.width = 445;
+            page.dialogs.elements.contextUp.canvas.height = 345;
+            page.dialogs.elements.contextUp.drawImage(imageObj, 0, 0, 445, 345);
+        };
+
+        if (fileType === "BINARY") {
+            imageObj.src = URL.createObjectURL(imageFile);
+        }
+        else {
+            imageObj.src = imageUrl;
+        }
+    }
+
+    page.dialogs.commands.changeImagePreview = (elem) => {
+        let imageFile = elem[0].files[0];
+
+        if (imageFile) {
+            let reader = new FileReader();
+
+            reader.readAsDataURL(imageFile);
+
+            reader.onload = function (e) {
+                if (e.target.readyState === FileReader.DONE) {
+                    page.dialogs.commands.loadImageToCanvas(imageFile, "BINARY", null);
+                }
+            }
+        }
+        else {
+            page.dialogs.elements.clearImagePreview();
+        }
+    }
+
+    page.dialogs.commands.clearImagePreview = () => {
+        page.dialogs.elements.imageFile.val("");
+        page.dialogs.elements.imagePreviewCanvas.css("display", "none");
+        page.dialogs.elements.wrapper.removeClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 1);
+    }
+
+    page.commands.loadData = () => {
+        page.loadData.getAllBooks();
+        page.loadData.getAllRates();
+
+    }
+
+    page.initializeControlEvent = () => {
+
+        page.dialogs.elements.divImagePreview.on('click', () => {
+            page.dialogs.elements.imageFile.trigger('click');
+        })
+
+        page.dialogs.elements.divImagePreviewUp.on('click', () => {
+            page.dialogs.elements.imageFileUp.trigger('click');
+        })
+
+        page.dialogs.elements.imageFile.on("change", function () {
+            page.dialogs.commands.changeImagePreview(page.dialogs.elements.imageFile);
+        });
+
+        page.dialogs.elements.imageFileUp.on("change", function () {
+            page.dialogs.commands.changeImagePreview(page.dialogs.elements.imageFileUp);
+        });
+
+        page.dialogs.elements.btnClearImagePreview.on('click', () => {
+            page.dialogs.commands.clearImagePreview();
+        })
+
+        page.elements.btnShowCreateModal.on('click', () => {
+            $('#createForm')[0].reset();
+            page.dialogs.elements.modalCreateBook.modal('show');
+        })
+
+        page.dialogs.elements.btnCreateBook.on('click', function () {
+            page.dialogs.commands.doCreate();
+        });
+
+        page.dialogs.elements.btnUpdateBook.on('click', () => {
+            page.dialogs.commands.doUpdate();
+        })
+
+    }
+
+    $(() => {
+        page.commands.loadData();
+
+        page.initializeControlEvent();
+    })
+
+
+
+</script>
+</body>
+</html>
